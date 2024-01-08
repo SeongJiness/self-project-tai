@@ -39,6 +39,7 @@
         android:textSize="20sp" />
 
     <EditText
+        android:id="@+id/userid"
         android:layout_width="150dp"
         android:layout_height="48dp"
         android:layout_centerHorizontal="false"
@@ -57,6 +58,7 @@
         android:textSize="20sp" />
 
     <EditText
+        android:id="@+id/password"
         android:layout_width="220dp"
         android:layout_height="48dp"
         android:layout_centerHorizontal="false"
@@ -96,6 +98,7 @@
         android:textSize="20sp" />
 
     <EditText
+        android:id="@+id/username"
         android:layout_width="220dp"
         android:layout_height="48dp"
         android:layout_centerHorizontal="false"

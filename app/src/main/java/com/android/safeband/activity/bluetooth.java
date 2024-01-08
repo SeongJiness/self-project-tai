@@ -162,6 +162,7 @@ public class bluetooth extends AppCompatActivity {
 
         listView.setOnItemClickListener(new myOnItemClickListener());
 
+
     }
 
     void bluetoothOn() {

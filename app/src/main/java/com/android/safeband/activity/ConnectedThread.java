@@ -30,7 +30,7 @@ public class ConnectedThread extends Thread {
 
     private Context context;
 
-    private boolean isFallDetected = false;
+    static private boolean isFallDetected = false;
 
     public ConnectedThread(BluetoothSocket socket, Context context, Handler handler) {
         mmSocket = socket;
@@ -126,7 +126,7 @@ public class ConnectedThread extends Thread {
             double accelerationMagnitude = Math.sqrt(accX * accX + accY * accY + accZ * accZ);
 
             // 낙상 감지 임계값 설정 (조절이 필요할 수 있음)
-            double fallThreshold = 1.14;
+            double fallThreshold = 2.4;
 
             Log.d("낙상", String.valueOf(accelerationMagnitude));
 

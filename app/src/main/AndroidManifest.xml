@@ -31,11 +31,24 @@
         android:theme="@style/Theme.Safebandproject"
         tools:targetApi="33">
         <activity
+            android:name="com.android.safeband.activity.SignupIntent"
+            android:exported="false" />
+        <activity
+            android:name="com.android.safeband.activity.Login"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name="com.android.safeband.activity.bluetooth"
             android:exported="false" />
         <activity
             android:name="com.android.safeband.activity.CountdownTimer"
-            android:exported="false"></activity>
+            android:exported="false" />
         <activity
             android:name="com.android.safeband.activity.profileSettingActivity"
             android:exported="false" />
@@ -59,12 +72,7 @@
 
         <activity
             android:name="com.android.safeband.activity.MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            android:exported="false">
         </activity>
     </application>
 

@@ -75,18 +75,6 @@
 
             </FrameLayout>
 
-            <Button
-                android:id="@+id/btn_announcement"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="30dp"
-                android:layout_marginEnd="8dp"
-                android:backgroundTint="#79EDFF"
-                android:text="공지사항"
-                android:textColor="#000000"
-                android:textSize="25dp"
-                tools:ignore="MissingPrefix" />
 
             <Button
                 android:id="@+id/btn_bluetooth"
@@ -101,18 +89,6 @@
                 android:textSize="25dp"
                 tools:ignore="MissingPrefix" />
 
-            <Button
-                android:id="@+id/btn_inquiry"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginEnd="8dp"
-                android:backgroundTint="#79EDFF"
-                android:text="문의하기"
-                android:textColor="#000000"
-                android:textSize="25dp"
-                tools:ignore="MissingPrefix" />
 
             <Button
                 android:id="@+id/btn_call"
