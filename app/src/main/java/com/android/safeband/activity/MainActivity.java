@@ -42,8 +42,7 @@ public class MainActivity extends AppCompatActivity implements MapView.CurrentLo
     private MapView mapView;
     private ViewGroup mapViewContainer;
 
-    // soundPlayThenCall 버튼은 사라질 버튼(하드웨어가 완성되면 없어질 부분)
-    private Button btn_call, btn_announcement, btn_bluetooth, btn_inquriy, soundPlayThenCall;
+    private Button btn_call, btn_announcement, btn_bluetooth, btn_inquriy;
     private ImageButton btn_profile_setting;
     private Intent data;
 
@@ -117,12 +116,6 @@ public class MainActivity extends AppCompatActivity implements MapView.CurrentLo
 
             }
         };
-        //공지사항 버튼
-        btn_announcement = (Button)findViewById(R.id.btn_announcement);
-        btn_announcement.setOnClickListener(v -> {
-            Intent intent = new Intent(getApplicationContext(), announcementActivity.class);
-            startActivityForResult(intent,REQUEST_CODE);  //intent를 넣어 실행시키게 됩니다.
-        });
 
         //블루투스 버튼
         btn_bluetooth = (Button) findViewById(R.id.btn_bluetooth);
@@ -132,13 +125,6 @@ public class MainActivity extends AppCompatActivity implements MapView.CurrentLo
                 Intent intent = new Intent(getApplicationContext(), bluetooth.class);
                 startActivityForResult(intent,REQUEST_CODE);  //intent를 넣어 실행시키게 됩니다.
             }
-        });
-
-        //문의하기 버튼
-        btn_inquriy = (Button)findViewById(R.id.btn_inquiry);
-        btn_inquriy.setOnClickListener(v -> {
-            Intent intent = new Intent(getApplicationContext(), inquiryActivity.class);
-            startActivityForResult(intent,REQUEST_CODE);  //intent를 넣어 실행시키게 됩니다.
         });
 
         // 비상연락망
