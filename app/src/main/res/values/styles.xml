@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="search_view" parent="Widget.AppCompat.SearchView">
+        <item name="android:textColor">#FF0000</item> <!-- 원하는 텍스트 색상으로 변경 -->
+    </style>
+</resources>
