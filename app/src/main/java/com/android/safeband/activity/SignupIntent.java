@@ -98,8 +98,7 @@ public class SignupIntent extends AppCompatActivity {
                                                         .set(users)
                                                         .addOnSuccessListener(aVoid -> {
                                                             Toast.makeText(SignupIntent.this, "회원가입 성공", Toast.LENGTH_SHORT).show();
-                                                            Intent intent = new Intent(getApplicationContext(), Login.class);
-                                                            startActivity(intent);
+                                                            finish();
                                                         })
                                                         .addOnFailureListener(e -> {
                                                             Toast.makeText(SignupIntent.this, "회원가입 실패", Toast.LENGTH_LONG).show();
@@ -107,9 +106,6 @@ public class SignupIntent extends AppCompatActivity {
 
                                                 // Check if the user is already logged in
                                                 if (mAuth.getCurrentUser() != null) {
-                                                    // User is already logged in, go to MainActivity
-                                                   // startActivity(new Intent(SignupIntent.this, MainActivity.class));
-                                                    //finish(); // Close the SignupIntent activity
                                                 }
                                             } else {
                                                 // If registration fails, display a message to the user.
