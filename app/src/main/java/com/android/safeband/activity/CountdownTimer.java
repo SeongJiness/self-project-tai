@@ -139,6 +139,11 @@ public class CountdownTimer extends AppCompatActivity {
 
         String phoneNumber = getPhoneNumberFromPrefs(); // 여기에 전화번호를 입력하세요
 
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            Toast.makeText(this, "전화번호가 설정되어 있지 않습니다.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         // 현재 전화 걸기 권한의 상태
         int permissionCheck = ContextCompat.checkSelfPermission(this,android.Manifest.permission.CALL_PHONE);
 
