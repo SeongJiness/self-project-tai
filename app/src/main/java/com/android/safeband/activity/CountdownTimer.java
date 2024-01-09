@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -31,20 +32,23 @@ public class CountdownTimer extends AppCompatActivity {
     long secondsRemaining;
     // 권한 요청을 식별 하기 위해 쓰이는 변수
     final int MY_PERMISSIONS_REQUEST_CALL_PHONE = 1000;
+    String phoneNumber;
 
-    private SharedPreferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_countdown_timer);
 
-        preferences = getSharedPreferences("PARENT", Context.MODE_PRIVATE);
 
         timerTextView = findViewById(R.id.timerTextView);
         endButton = findViewById(R.id.endButton);
         mediaPlayer = MediaPlayer.create(this, R.raw.sound); // 사운드 변수
 
+        // 전화번호를 받아옴
+        phoneNumber = getPhoneNumberFromPrefs();
+
+        savePhoneNumberToPrefs(phoneNumber);
 
         // 사운드 시작
         startSound();
@@ -68,13 +72,19 @@ public class CountdownTimer extends AppCompatActivity {
         });
     }
 
+    private void savePhoneNumberToPrefs(String phoneNumber) {
+        SharedPreferences sharedPreferences = getSharedPreferences("Phone", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("phoneNumber", phoneNumber);
+        editor.apply();
+    }
+
     private void startSound() {
         // AudioManager 인스턴스를 얻습니다.
         AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
         // 볼륨을 최대로 설정합니다.
-        //int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        int maxVolume = 0;
+        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, maxVolume, 0);
 
         //  사운드 무한 반복 설정
@@ -120,9 +130,14 @@ public class CountdownTimer extends AppCompatActivity {
         mediaPlayer.release();
     }
 
+    private String getPhoneNumberFromPrefs() {
+        SharedPreferences sharedPreferences = getSharedPreferences("Phone", MODE_PRIVATE);
+        return sharedPreferences.getString("phoneNumber", null);
+    }
+
     private void makeCall() {
 
-        String phoneNumber = preferences.getString("phone", "");; // 여기에 전화번호를 입력하세요
+        String phoneNumber = getPhoneNumberFromPrefs(); // 여기에 전화번호를 입력하세요
 
         // 현재 전화 걸기 권한의 상태
         int permissionCheck = ContextCompat.checkSelfPermission(this,android.Manifest.permission.CALL_PHONE);

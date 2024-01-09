@@ -22,6 +22,7 @@ public class ConnectedThread extends Thread {
 
     private static final String TAG = "ArduinoSensorData";
     private volatile boolean receivingData = false;
+    private volatile boolean reconnecting = false;
 
     // External components to be set from outside
     private Handler handler;
@@ -32,11 +33,12 @@ public class ConnectedThread extends Thread {
 
     private static boolean isFallDetected = false;
 
+
+
     public ConnectedThread(BluetoothSocket socket, Context context, Handler handler) {
         mmSocket = socket;
         this.context = context;
         this.handler = handler;
-
 
         try {
             mmInStream = socket.getInputStream();
@@ -85,14 +87,12 @@ public class ConnectedThread extends Thread {
 
                             readBufferPosition = 0;
 
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        // 센서값을 JSON으로 변환
-                                        processReceivedData(text);
-                                    }
-                                });
-
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    processReceivedData(text);
+                                }
+                            });
                         } else {
                             readBuffer[readBufferPosition++] = tempByte;
                         }
@@ -100,15 +100,19 @@ public class ConnectedThread extends Thread {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+
+                if (reconnecting) {
+                    SystemClock.sleep(2000);
+                } else {
+                    reconnecting = true;
+                    reconnecting = false;
+                }
             }
 
             try {
-                // 1초마다 받아옴
                 SystemClock.sleep(1000);
             } catch (Exception e) {
-                // InterruptedException 처리
                 e.printStackTrace();
-                // 혹은 다른 처리를 수행할 수 있습니다.
             }
         }
     }
@@ -126,10 +130,9 @@ public class ConnectedThread extends Thread {
             double accelerationMagnitude = Math.sqrt(accX * accX + accY * accY + accZ * accZ);
 
             // 낙상 감지 임계값 설정 (조절이 필요할 수 있음)
-            double fallThreshold = -0.1;
+            double fallThreshold = 2.4;
 
             Log.d("낙상", String.valueOf(accelerationMagnitude));
-
 
             String logMessage = "Received sensor values: accX=" + accX + ", accY=" + accY + ", accZ=" + accZ;
             Log.d(TAG, logMessage);

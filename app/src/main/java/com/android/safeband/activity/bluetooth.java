@@ -11,6 +11,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -52,6 +53,11 @@ public class bluetooth extends AppCompatActivity {
     private static final String BT_ADDRESS = "XX:XX:XX:XX:XX:XX"; // 아두이노 블루투스 주소
 
     private static final String TAG = "ArduinoSensorData";
+
+    private static final String PREFS_NAME = "BluetoothPrefs";
+    private static final String PREF_BT_ADDRESS = "BluetoothAddress";
+    private boolean isReconnecting = false;
+
 
     // Create a BroadcastReceiver for ACTION_FOUND.
     private final BroadcastReceiver discoveryReceiver = new BroadcastReceiver() {
@@ -162,6 +168,11 @@ public class bluetooth extends AppCompatActivity {
 
         listView.setOnItemClickListener(new myOnItemClickListener());
 
+        String savedBluetoothAddress = getSavedBluetoothAddress();
+        if (savedBluetoothAddress != null && !savedBluetoothAddress.isEmpty()) {
+            autoConnectToBluetooth(savedBluetoothAddress);
+        }
+
 
     }
 
@@ -208,8 +219,14 @@ public class bluetooth extends AppCompatActivity {
 
         // Unregister the ACTION_FOUND receiver.
         unregisterReceiver(discoveryReceiver);
-        connectedThread.resetFallDetection();
+
+        if (connectedThread != null) {
+            connectedThread.resetFallDetection();
+        }
+
+        saveBluetoothAddress();
     }
+
 
     // 디바이스 검색 버튼 클릭 핸들러
     public void onClickButtonSearch(View view) {
@@ -348,6 +365,70 @@ public class bluetooth extends AppCompatActivity {
                 // No devices in the list, handle this case accordingly (e.g., show a message or take any action)
             }
         }
+    }
+
+    private void autoConnectToBluetooth(String bluetoothAddress) {
+        Log.d(TAG, "Bluetooth 자동 연결: " + bluetoothAddress);
+
+        if (btAdapter != null && !btAdapter.isEnabled()) {
+            // Bluetooth가 비활성화되어 있으면 활성화합니다.
+            Log.d(TAG, "Bluetooth 비활성화, 활성화 중...");
+            bluetoothOn();
+        }
+
+        // 이미 연결된 경우 추가적인 연결 시도를 하지 않도록 수정
+        if (btSocket != null && btSocket.isConnected()) {
+            textStatus.setText("이미 연결됨");
+            Log.d(TAG, "이미 연결됨");
+            return;
+        }
+
+        BluetoothDevice device = btAdapter.getRemoteDevice(bluetoothAddress);
+
+        if (device != null) {
+            // 소켓 생성 및 연결
+            try {
+                btSocket = createBluetoothSocket(device);
+                btSocket.connect();
+
+                // 연결 성공을 나타내는 UI 업데이트 또는 기타 작업 수행
+                textStatus.setText(device.getName() + "에 연결됨");
+                Log.d(TAG, device.getName() + "에 연결됨");
+
+                Handler handler = new Handler(Looper.getMainLooper());
+                connectedThread = new ConnectedThread(btSocket, bluetooth.this, handler);
+                connectedThread.startReceiving();
+            } catch (IOException e) {
+                // 연결 실패 시 처리 (예: 오류 메시지 표시)
+                textStatus.setText("연결 실패!");
+                Log.e(TAG, "연결 실패", e);
+                e.printStackTrace();
+
+                // 연결 실패 시에도 연결 스레드 초기화
+                if (connectedThread != null) {
+                    connectedThread.resetFallDetection();
+                }
+            }
+        } else {
+            // 저장된 Bluetooth 주소에 해당하는 장치를 찾을 수 없는 경우 처리
+            textStatus.setText("장치를 찾을 수 없음");
+            Log.d(TAG, "주소에 해당하는 장치를 찾을 수 없음: " + bluetoothAddress);
+        }
+    }
+
+    private void saveBluetoothAddress() {
+        if (btSocket != null && btSocket.isConnected()) {
+            String connectedDeviceAddress = btSocket.getRemoteDevice().getAddress();
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString(PREF_BT_ADDRESS, connectedDeviceAddress);
+            editor.apply();
+        }
+    }
+
+    private String getSavedBluetoothAddress() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        return prefs.getString(PREF_BT_ADDRESS, null);
     }
 
 
