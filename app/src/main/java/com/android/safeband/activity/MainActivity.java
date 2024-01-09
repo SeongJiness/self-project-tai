@@ -31,12 +31,14 @@ import com.android.safebandproject.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import net.daum.mf.map.api.MapPoint;
 import net.daum.mf.map.api.MapView;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.Objects;
 
     public class MainActivity extends AppCompatActivity implements MapView.CurrentLocationEventListener, MapView.MapViewEventListener {
@@ -49,6 +51,9 @@ import java.util.Objects;
     private Button btn_call, btn_bluetooth, btn_logout;
     private ImageButton btn_profile_setting;
     private Intent data;
+
+    private List<Guardian> guardians;
+    private GuardianAdapter adapter;
 
     Dialog ReCheckDeleteAccount;
 
@@ -341,7 +346,7 @@ import java.util.Objects;
         // 네 버튼
         Button yesBtn = ReCheckDeleteAccount.findViewById(R.id.yesButton);
         yesBtn.setOnClickListener(view -> {
-            deleteUserDataFromFirestore();
+            deleteUserAccount();
             // Firebase Authentication에서 사용자 삭제
             FirebaseAuth.getInstance().getCurrentUser().delete()
                     .addOnCompleteListener(task -> {
@@ -359,6 +364,16 @@ import java.util.Objects;
         });
     }
 
+        private void deleteUserAccount() {
+            // Delete user data from "users" collection
+            deleteUserDataFromFirestore();
+
+            // Delete guardian data from "guardians" collection
+            deleteGuardianDataFromFirestore();
+
+            // Other operations after deletion (if any)
+        }
+
     private void deleteUserDataFromFirestore() {
         // Firestore에서 사용자 데이터 삭제
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -375,6 +390,48 @@ import java.util.Objects;
                 });
     }
 
+        private void deleteGuardianDataFromFirestore() {
+            String currentUserUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+            db.collection("guardians")
+                    .whereEqualTo("uid", currentUserUid)
+                    .get()
+                    .addOnSuccessListener(queryDocumentSnapshots -> {
+                        for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+                            Guardian guardian = documentSnapshot.toObject(Guardian.class);
+
+                            // Firestore에서 가져온 guardian 정보를 사용하여 삭제 등의 작업 수행
+                            deleteGuardianDocument(documentSnapshot.getId());
+
+                            // RecyclerView에서 보호자를 제거합니다.
+                            if (guardians != null && adapter != null) {
+                                guardians.remove(guardian);
+                                adapter.notifyDataSetChanged();
+                            }
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        // Firestore에서 데이터 조회 실패 시 동작
+                        // 예: 실패 메시지 출력 또는 다른 작업 수행
+                    });
+        }
+
+        // Firestore에서 guardian 문서 삭제
+        private void deleteGuardianDocument(String documentId) {
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+            db.collection("guardians")
+                    .document(documentId)
+                    .delete()
+                    .addOnSuccessListener(aVoid -> {
+                        // Firestore에서 삭제 성공 시 동작
+                        // 예: 성공 메시지 출력 또는 다른 작업 수행
+                    })
+                    .addOnFailureListener(e -> {
+                        // Firestore에서 삭제 실패 시 동작
+                        // 예: 실패 메시지 출력 또는 다른 작업 수행
+                    });
+        }
     }
 

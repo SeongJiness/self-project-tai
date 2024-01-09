@@ -9,6 +9,9 @@ public class Guardian {
         this.phoneNumber = phoneNumber;
     }
 
+    public Guardian() {
+        // 기본 생성자
+    }
     public String getName() {
         return name;
     }
