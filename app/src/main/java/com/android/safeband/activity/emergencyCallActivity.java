@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.safeband.activity.Guardian;
 import com.android.safeband.activity.GuardianAdapter;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import com.android.safebandproject.R;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 public class emergencyCallActivity extends AppCompatActivity {
 
@@ -37,6 +39,9 @@ public class emergencyCallActivity extends AppCompatActivity {
     private String addedPhoneNumber;
 
     private FirebaseFirestore db;
+
+    private int selectedGuardianPosition = RecyclerView.NO_POSITION;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +76,13 @@ public class emergencyCallActivity extends AppCompatActivity {
                             public void onClick(DialogInterface dialog, int which) {
                                 dialog.dismiss();
                                 // Handle cancel button click (if needed)
+                            }
+                        })
+                        .setNeutralButton("삭제", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // 삭제 버튼 클릭 시 동작
+                                deleteGuardian(guardian);
                             }
                         })
                         .show();
@@ -141,10 +153,14 @@ public class emergencyCallActivity extends AppCompatActivity {
                         addedGuardianName = guardianNameEditText.getText().toString();
                         addedPhoneNumber = phoneNumberEditText.getText().toString();
 
+                        // 현재 로그인한 사용자의 UID 가져오기
+                        String currentUserUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
                         // Firestore에 데이터 추가
                         Map<String, Object> guardianData = new HashMap<>();
                         guardianData.put("name", addedGuardianName);
                         guardianData.put("phone", addedPhoneNumber);
+                        guardianData.put("uid", currentUserUid); // 현재 사용자의 UID 저장
 
                         db.collection("guardians")
                                 .add(guardianData)
@@ -175,14 +191,18 @@ public class emergencyCallActivity extends AppCompatActivity {
     }
 
     private void loadDataFromFirestore(String searchQuery) {
+        // 현재 로그인한 사용자의 UID 가져오기
+        String currentUserUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
         // Firestore에서 데이터 가져오기
         Query query;
         if (TextUtils.isEmpty(searchQuery)) {
-            query = db.collection("guardians");
+            query = db.collection("guardians").whereEqualTo("uid", currentUserUid);
         } else {
             String searchQueryLowerCase = searchQuery.toLowerCase();
 
             query = db.collection("guardians")
+                    .whereEqualTo("uid", currentUserUid)
                     .orderBy("name")
                     .startAt(searchQueryLowerCase)
                     .endAt(searchQueryLowerCase + "\uf8ff");
@@ -212,4 +232,40 @@ public class emergencyCallActivity extends AppCompatActivity {
                     }
                 });
     }
+
+    private void deleteGuardian(Guardian guardian) {
+        // 현재 로그인한 사용자의 UID 가져오기
+        String currentUserUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        // Firestore에서도 삭제
+        db.collection("guardians")
+                .whereEqualTo("name", guardian.getName())
+                .whereEqualTo("phone", guardian.getPhoneNumber())
+                .whereEqualTo("uid", currentUserUid) // 현재 사용자의 UID와 일치하는 데이터만 삭제
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+                        db.collection("guardians")
+                                .document(documentSnapshot.getId())
+                                .delete()
+                                .addOnSuccessListener(aVoid -> {
+                                    // Firestore에서 삭제 성공 시 동작
+                                    // 예: 성공 메시지 출력 또는 다른 작업 수행
+                                })
+                                .addOnFailureListener(e -> {
+                                    // Firestore에서 삭제 실패 시 동작
+                                    // 예: 실패 메시지 출력 또는 다른 작업 수행
+                                });
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    // Firestore에서 데이터 조회 실패 시 동작
+                    // 예: 실패 메시지 출력 또는 다른 작업 수행
+                });
+
+        // RecyclerView에서 삭제
+        guardians.remove(guardian);
+        adapter.notifyDataSetChanged();
+    }
+
 }
