@@ -6,6 +6,7 @@ import androidx.core.content.ContextCompat;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -18,6 +19,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.safebandproject.R;
+import static com.android.safeband.activity.ConnectedThread.resetFallDetection;
 
 public class CountdownTimer extends AppCompatActivity {
     static final int MAXIMUM_SECONDS = 30000;
@@ -30,10 +32,14 @@ public class CountdownTimer extends AppCompatActivity {
     // 권한 요청을 식별 하기 위해 쓰이는 변수
     final int MY_PERMISSIONS_REQUEST_CALL_PHONE = 1000;
 
+    private SharedPreferences preferences;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_countdown_timer);
+
+        preferences = getSharedPreferences("PARENT", Context.MODE_PRIVATE);
 
         timerTextView = findViewById(R.id.timerTextView);
         endButton = findViewById(R.id.endButton);
@@ -56,7 +62,7 @@ public class CountdownTimer extends AppCompatActivity {
 
             mediaPlayer.setLooping(false);
             mediaPlayer.pause();
-
+            resetFallDetection();
             // 현재 액티비티를 종료 후 이전 화면으로 돌아간다.
             finish();
         });
@@ -67,7 +73,8 @@ public class CountdownTimer extends AppCompatActivity {
         AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
         // 볼륨을 최대로 설정합니다.
-        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        //int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        int maxVolume = 0;
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, maxVolume, 0);
 
         //  사운드 무한 반복 설정
@@ -114,7 +121,8 @@ public class CountdownTimer extends AppCompatActivity {
     }
 
     private void makeCall() {
-        String phoneNumber = "01099348459"; // 여기에 전화번호를 입력하세요
+
+        String phoneNumber = preferences.getString("phone", "");; // 여기에 전화번호를 입력하세요
 
         // 현재 전화 걸기 권한의 상태
         int permissionCheck = ContextCompat.checkSelfPermission(this,android.Manifest.permission.CALL_PHONE);
@@ -123,6 +131,7 @@ public class CountdownTimer extends AppCompatActivity {
         if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
             // 전화를 건다.
             startActivity(new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + phoneNumber)));
+            resetFallDetection();
         }
         // 권한을 허용 받지 못했을 때
         else {

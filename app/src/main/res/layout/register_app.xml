@@ -35,18 +35,18 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"
         android:layout_marginTop="200dp"
-        android:text="아이디"
+        android:text="이메일"
         android:textSize="20sp" />
 
     <EditText
-        android:id="@+id/userid"
-        android:layout_width="150dp"
+        android:id="@+id/userEmail"
+        android:layout_width="220dp"
         android:layout_height="48dp"
         android:layout_centerHorizontal="false"
         android:layout_marginLeft="150dp"
         android:layout_marginTop="200dp"
         android:background="@drawable/signin_edit_text"
-        android:hint=" ID" />
+        android:hint=" Email" />
 
     <TextView
         android:id="@+id/textView3"
@@ -66,7 +66,7 @@
         android:layout_marginLeft="150dp"
         android:layout_marginTop="280dp"
         android:background="@drawable/signin_edit_text"
-        android:hint=" PW" />
+        android:hint=" PW 6자리이상" />
 
     <TextView
         android:id="@+id/textView4"
@@ -78,6 +78,7 @@
         android:textSize="20sp" />
 
     <EditText
+        android:id="@+id/confirm_password"
         android:layout_width="220dp"
         android:layout_height="48dp"
         android:layout_centerHorizontal="false"
@@ -110,7 +111,6 @@
 
 
     <TextView
-        android:id="@+id/textView6"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"
@@ -119,6 +119,7 @@
         android:textSize="20sp" />
 
     <EditText
+        android:id="@+id/phone"
         android:layout_width="220dp"
         android:layout_height="48dp"
         android:layout_centerHorizontal="false"
@@ -129,7 +130,7 @@
         android:hint=" 010-0000-0000" />
 
     <Button
-        android:id="@+id/submit_button"
+        android:id="@+id/signupButton"
         android:layout_width="300dp"
         android:layout_height="60dp"
         android:layout_alignParentTop="true"
@@ -140,18 +141,6 @@
         android:textSize="20sp"
         android:textStyle="bold"
         />
-
-    <TextView
-        android:id="@+id/textView14"
-        android:layout_width="wrap_content"
-        android:layout_height="39dp"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginTop="200dp"
-        android:layout_marginEnd="25dp"
-        android:gravity="center"
-        android:text="중복확인"
-        android:textSize="20sp" />
 
 
 </RelativeLayout>

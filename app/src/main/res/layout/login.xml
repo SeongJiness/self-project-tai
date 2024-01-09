@@ -48,12 +48,12 @@
                 android:textStyle="bold" />
 
             <EditText
-                android:id="@+id/userid"
+                android:id="@+id/userEmail"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@drawable/custom_border"
                 android:drawableStart="@drawable/baseline_person_24"
-                android:hint="@string/id"
+                android:hint="@string/email"
                 android:padding="8dp"
                 android:textColor="@color/black"
                 android:textColorHighlight="@color/cardview_dark_background"
@@ -91,38 +91,14 @@
                 android:layout_width="wrap_content"
                 android:orientation="horizontal"
                 android:layout_gravity="center">
-                <Button
-                    android:id="@+id/textView11"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="비밀번호 찾기"
-                    android:textSize="11sp"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:textColor="@color/black"
-                    android:backgroundTint="@color/white"
-                    />
 
-                <Button
-                    android:id="@+id/textView12"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="아이디 찾기"
-                    android:textSize="11sp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.555"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:textColor="@color/black"
-                    android:backgroundTint="@color/white"
-                    />
 
                 <Button
                     android:id="@+id/signup_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="회원가입"
-                    android:textSize="11sp"
+                    android:textSize="20sp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     android:textColor="@color/black"

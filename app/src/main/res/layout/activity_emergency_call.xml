@@ -54,26 +54,27 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         app:layout_constraintBottom_toTopOf="@+id/linearLayout"
         app:layout_constraintTop_toBottomOf="@+id/linearLayout2"
         tools:ignore="MissingConstraints">
 
-        <EditText
-            android:id="@+id/search_view"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="2dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginBottom="12dp"
-            android:background="@drawable/round"
-            android:hint="검색"
-            android:importantForAutofill="no"
-            android:minHeight="48dp"
-            android:textColor="#000000"
-            android:textSize="28dp"
-            tools:ignore="LabelFor,SpeakableTextPresentCheck,TextFields,VisualLintTextFieldSize" />
+        <TextView
+            android:id="@+id/u_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="이름"
+            android:textSize="40sp"
+            android:layout_marginRight="50dp"
+            />
+
+        <TextView
+            android:id="@+id/u_phone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="전화번호"
+            android:textSize="30sp"
+            />
 
     </LinearLayout>
 

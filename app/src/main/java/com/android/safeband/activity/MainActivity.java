@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -27,6 +28,9 @@ import androidx.core.content.ContextCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.android.safebandproject.R;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import net.daum.mf.map.api.MapPoint;
 import net.daum.mf.map.api.MapView;
@@ -35,14 +39,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 
-public class MainActivity extends AppCompatActivity implements MapView.CurrentLocationEventListener, MapView.MapViewEventListener {
-    private DrawerLayout drawerLayout;
-    private View drawerView;
+    public class MainActivity extends AppCompatActivity implements MapView.CurrentLocationEventListener, MapView.MapViewEventListener {
+        private DrawerLayout drawerLayout;
+        private View drawerView;
 
-    private MapView mapView;
-    private ViewGroup mapViewContainer;
+        private MapView mapView;
+        private ViewGroup mapViewContainer;
 
-    private Button btn_call, btn_announcement, btn_bluetooth, btn_inquriy;
+    private Button btn_call, btn_bluetooth, btn_logout;
     private ImageButton btn_profile_setting;
     private Intent data;
 
@@ -51,6 +55,10 @@ public class MainActivity extends AppCompatActivity implements MapView.CurrentLo
     public MainActivity() {
     }
     public static final int REQUEST_CODE = 101;
+
+    TextView name;
+
+    String userName , password, phone, email;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,8 +87,11 @@ public class MainActivity extends AppCompatActivity implements MapView.CurrentLo
         //메뉴를 눌렀을 때
         ImageButton menu_open = (ImageButton)findViewById(R.id.menu_button);
         menu_open.setOnClickListener(v -> drawerLayout.openDrawer(drawerView));
-
         drawerView.setOnTouchListener((view, motionEvent) -> true);
+
+        name = findViewById(R.id.name);
+        fetchUserDataFromFirestore();
+
 
         //메뉴 닫기를 눌렀을 때
         ImageButton btn_close = (ImageButton)findViewById(R.id.btn_close);
@@ -94,6 +105,14 @@ public class MainActivity extends AppCompatActivity implements MapView.CurrentLo
         Button btn_out = findViewById(R.id.btn_out);
         btn_out.setOnClickListener(view -> {
             showDialog01();
+        });
+
+        // 로그 아웃 버튼을 눌렀을 때
+        btn_logout = findViewById(R.id.btn_logout);
+        btn_logout.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut(); // Firebase 로그아웃
+            Intent intent = new Intent(getApplicationContext(), Login.class);
+            startActivityForResult(intent, REQUEST_CODE);
         });
         DrawerLayout.DrawerListener listener = new DrawerLayout.DrawerListener() { ///drawer 오픈됐을 때 작동함
             @Override
@@ -134,12 +153,18 @@ public class MainActivity extends AppCompatActivity implements MapView.CurrentLo
             startActivityForResult(intent,REQUEST_CODE);  //intent를 넣어 실행시키게 됩니다.
         });
 
+
         //프로필 설정
         btn_profile_setting = (ImageButton)findViewById(R.id.btn_profile_setting);
         btn_profile_setting.setOnClickListener(v -> {
             Intent intent = new Intent(getApplicationContext(), profileSettingActivity.class);
+            intent.putExtra("name", name.getText());
+            intent.putExtra("phone", phone);
+            intent.putExtra("email", email);
             startActivityForResult(intent,REQUEST_CODE);  //intent를 넣어 실행시키게 됩니다.
         });
+
+
 
         mapView = new MapView(this);
         mapViewContainer = (ViewGroup) findViewById(R.id.map_view);
@@ -275,6 +300,34 @@ public class MainActivity extends AppCompatActivity implements MapView.CurrentLo
 
     }
 
+
+        //파이어스토어에서 데이터 가져오기
+        private void fetchUserDataFromFirestore() {
+            // 현재 사용자의 UID 가져오기
+            String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+            // Firestore에서 "users" 컬렉션에 접근하고 사용자 UID를 가진 문서를 가져오기
+            FirebaseFirestore.getInstance().collection("users").document(userId)
+                    .get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        // 문서가 존재하는지 확인
+                        if (documentSnapshot.exists()) {
+                            // 문서에서 사용자 이름 가져오기
+                            userName = documentSnapshot.getString("name");
+                            phone = documentSnapshot.getString("phone");
+                            email = documentSnapshot.getString("email");
+
+                            // 가져온 이름을 TextView에 설정
+                            name.setText(userName);
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        // 데이터를 가져오는 데 실패하면 오류 처리
+                        Toast.makeText(MainActivity.this, "사용자 데이터를 가져오지 못했습니다: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+        }
+
+
     public void showDialog01() {
         ReCheckDeleteAccount.show();
         Objects.requireNonNull(ReCheckDeleteAccount.getWindow()).setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
@@ -288,13 +341,40 @@ public class MainActivity extends AppCompatActivity implements MapView.CurrentLo
         // 네 버튼
         Button yesBtn = ReCheckDeleteAccount.findViewById(R.id.yesButton);
         yesBtn.setOnClickListener(view -> {
-            // 원하는 기능
-
-
-            // finish(); // 앱 종료
+            deleteUserDataFromFirestore();
+            // Firebase Authentication에서 사용자 삭제
+            FirebaseAuth.getInstance().getCurrentUser().delete()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            // Firebase Authentication에서 사용자 삭제 성공
+                            // Firestore에서 사용자 데이터 삭제
+                            Toast.makeText(MainActivity.this, "회원탈퇴 성공", Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(getApplicationContext(), Login.class);
+                            startActivity(intent);
+                        } else {
+                            // Firebase Authentication에서 사용자 삭제 실패
+                            Toast.makeText(MainActivity.this, "회원탈퇴 실패", Toast.LENGTH_SHORT).show();
+                        }
+                    });
         });
+    }
 
+    private void deleteUserDataFromFirestore() {
+        // Firestore에서 사용자 데이터 삭제
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        FirebaseFirestore.getInstance().collection("users").document(userId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    // Firestore에서 사용자 데이터 삭제 성공
+
+
+                    // 문서와 해당 문서에 속한 모든 필드를 삭제하는 코드
+                })
+                .addOnFailureListener(e -> {
+                    // Firestore에서 사용자 데이터 삭제 실패
+                });
     }
 
 
-}
+    }
+

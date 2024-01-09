@@ -31,12 +31,14 @@
         android:theme="@style/Theme.Safebandproject"
         tools:targetApi="33">
         <activity
+            android:name="com.android.safeband.activity.emergencyCallActivity"
+            android:exported="false" />
+        <activity
             android:name="com.android.safeband.activity.SignupIntent"
             android:exported="false" />
         <activity
             android:name="com.android.safeband.activity.Login"
             android:exported="true">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -51,17 +53,7 @@
             android:exported="false" />
         <activity
             android:name="com.android.safeband.activity.profileSettingActivity"
-            android:exported="false" />
-        <activity
-            android:name="com.android.safeband.activity.emergencyCallActivity"
-            android:exported="false" />
-        <activity
-            android:name="com.android.safeband.activity.inquiryActivity"
-            android:exported="false" />
-        <activity
-            android:name="com.android.safeband.activity.announcementActivity"
-            android:exported="false" /> <!-- <activity -->
-        <!-- android:name=".register_app" -->
+            android:exported="false" /> <!-- android:name=".register_app" -->
         <!-- android:exported="false" /> -->
         <!-- <activity -->
         <!-- android:name=".bluetooth" -->
@@ -72,8 +64,7 @@
 
         <activity
             android:name="com.android.safeband.activity.MainActivity"
-            android:exported="false">
-        </activity>
+            android:exported="false"></activity>
     </application>
 
 </manifest>

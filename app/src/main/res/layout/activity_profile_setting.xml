@@ -96,14 +96,14 @@
                     android:layout_marginTop="10dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
-                    android:text="아이디"
+                    android:text="이메일"
                     android:textSize="20sp"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/rectangle_2" />
 
 
                 <EditText
-                    android:id="@+id/editText"
+                    android:id="@+id/email"
                     android:layout_width="220dp"
                     android:layout_height="48dp"
                     android:layout_centerHorizontal="false"
@@ -136,7 +136,7 @@
 
 
                 <EditText
-                    android:id="@+id/editText2"
+                    android:id="@+id/password"
                     android:layout_width="220dp"
                     android:layout_height="48dp"
                     android:layout_centerHorizontal="false"
@@ -167,7 +167,7 @@
 
 
                 <EditText
-                    android:id="@+id/editText3"
+                    android:id="@+id/confirm_password"
                     android:layout_width="220dp"
                     android:layout_height="48dp"
                     android:layout_centerHorizontal="false"
@@ -198,7 +198,7 @@
 
 
                 <EditText
-                    android:id="@+id/editText4"
+                    android:id="@+id/name"
                     android:layout_width="220dp"
                     android:layout_height="48dp"
                     android:layout_centerHorizontal="false"
@@ -229,7 +229,7 @@
 
 
                 <EditText
-                    android:id="@+id/editText5"
+                    android:id="@+id/phone"
                     android:layout_width="220dp"
                     android:layout_height="48dp"
                     android:layout_centerHorizontal="false"
