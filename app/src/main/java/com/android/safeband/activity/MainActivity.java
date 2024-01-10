@@ -166,6 +166,7 @@ import java.util.Objects;
             intent.putExtra("name", name.getText());
             intent.putExtra("phone", phone);
             intent.putExtra("email", email);
+            intent.putExtra("password", password);
             startActivityForResult(intent,REQUEST_CODE);  //intent를 넣어 실행시키게 됩니다.
         });
 
@@ -321,6 +322,7 @@ import java.util.Objects;
                             userName = documentSnapshot.getString("name");
                             phone = documentSnapshot.getString("phone");
                             email = documentSnapshot.getString("email");
+                            password = documentSnapshot.getString("password");
 
                             // 가져온 이름을 TextView에 설정
                             name.setText(userName);

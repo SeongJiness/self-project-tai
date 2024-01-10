@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import com.android.safebandproject.R;
 import com.google.firebase.auth.FirebaseAuth;
@@ -15,7 +16,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 public class profileSettingActivity extends AppCompatActivity {
 
-    private EditText name, phone, email, password;
+    private EditText name, phone, email, password, confirm_password;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,11 +29,13 @@ public class profileSettingActivity extends AppCompatActivity {
         String user_name = receivedIntent.getStringExtra("name");
         String user_phone = receivedIntent.getStringExtra("phone");
         String user_email = receivedIntent.getStringExtra("email");
+        String user_password = receivedIntent.getStringExtra("password");
 
         name = findViewById(R.id.name);
         phone = findViewById(R.id.phone);
         email = findViewById(R.id.email);
         password = findViewById(R.id.password);
+        confirm_password = findViewById(R.id.confirm_password);
 
         name.setText(user_name);
         phone.setText(user_phone);
@@ -40,14 +43,22 @@ public class profileSettingActivity extends AppCompatActivity {
 
         email.setEnabled(false);
 
+        password.setText(user_password);
+        confirm_password.setText(user_password);
+
         findViewById(R.id.backButton).setOnClickListener(v -> {
             finish(); // 현재 액티비티 없애기
         });
 
         findViewById(R.id.btn_plus).setOnClickListener(v -> {
-            // 비밀번호 업데이트 및 Firestore 정보 갱신
-            updatePasswordAndUserInfo();
-            finish();
+            if (!password.getText().toString().equals(confirm_password.getText().toString())) {
+                // 비밀번호가 일치하지 않으면 Toast 메시지를 표시
+                Toast.makeText(profileSettingActivity.this, "비밀번호가 일치하지 않습니다.", Toast.LENGTH_SHORT).show();
+            } else {
+                // 비밀번호가 일치하면 비밀번호 및 사용자 정보 업데이트를 진행
+                updatePasswordAndUserInfo();
+                finish();
+            }
         });
     }
 
