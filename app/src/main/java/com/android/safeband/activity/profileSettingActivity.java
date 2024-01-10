@@ -51,8 +51,14 @@ public class profileSettingActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btn_plus).setOnClickListener(v -> {
-            if (!password.getText().toString().equals(confirm_password.getText().toString())) {
-                // 비밀번호가 일치하지 않으면 Toast 메시지를 표시
+            String newPassword = password.getText().toString().trim();
+            String confirmPassword = confirm_password.getText().toString().trim();
+
+            if (newPassword.length() < 6) {
+                // 새 비밀번호가 6자리 미만인 경우
+                Toast.makeText(profileSettingActivity.this, "비밀번호는 최소 6자 이상이어야 합니다.", Toast.LENGTH_SHORT).show();
+            } else if (!newPassword.equals(confirmPassword)) {
+                // 비밀번호가 일치하지 않는 경우
                 Toast.makeText(profileSettingActivity.this, "비밀번호가 일치하지 않습니다.", Toast.LENGTH_SHORT).show();
             } else {
                 // 비밀번호가 일치하면 비밀번호 및 사용자 정보 업데이트를 진행
@@ -60,34 +66,32 @@ public class profileSettingActivity extends AppCompatActivity {
                 finish();
             }
         });
+
+
     }
 
-    private void updatePasswordAndUserInfo() {
+    private void updatePasswordAndUserInfo () {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         String newPasswordStr = password.getText().toString().trim();
 
-        if (!newPasswordStr.isEmpty()) {
-            if (newPasswordStr.length() < 6) {
-                // 새 비밀번호가 6자리 미만인 경우
-                Toast.makeText(profileSettingActivity.this, "비밀번호는 최소 6자 이상이어야 합니다.", Toast.LENGTH_SHORT).show();
-            } else {
-                // Firebase Authentication에서 비밀번호 업데이트
-                user.updatePassword(newPasswordStr)
-                        .addOnCompleteListener(task -> {
-                            if (task.isSuccessful()) {
-                                // 비밀번호 업데이트 성공
-                                // 여기에서 Firestore에서 사용자 정보를 업데이트할 수 있음
-                                updateUserInfoInFirestore();
-                            } else {
-                                // 비밀번호 업데이트 실패
-                                // 에러 처리
-                            }
-                        });
-            }
-        } else {
-            // 새 비밀번호를 입력하지 않은 경우
-            // 에러 처리
+        if (newPasswordStr.length() < 6) {
+            // 새 비밀번호가 6자리 미만인 경우
+            Toast.makeText(profileSettingActivity.this, "비밀번호는 최소 6자 이상이어야 합니다.", Toast.LENGTH_SHORT).show();
+            return; // 비밀번호가 6자리 미만이면 업데이트를 진행하지 않고 종료
         }
+
+        // Firebase Authentication에서 비밀번호 업데이트
+        user.updatePassword(newPasswordStr)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        // 비밀번호 업데이트 성공
+                        // 여기에서 Firestore에서 사용자 정보를 업데이트할 수 있음
+                        updateUserInfoInFirestore();
+                    } else {
+                        // 비밀번호 업데이트 실패
+                        // 에러 처리
+                    }
+                });
     }
 
     private void updateUserInfoInFirestore() {
