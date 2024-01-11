@@ -191,18 +191,14 @@ public class emergencyCallActivity extends AppCompatActivity {
     }
 
     private void loadDataFromFirestore(String searchQuery) {
-        // 현재 로그인한 사용자의 UID 가져오기
-        String currentUserUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
         // Firestore에서 데이터 가져오기
         Query query;
         if (TextUtils.isEmpty(searchQuery)) {
-            query = db.collection("guardians").whereEqualTo("uid", currentUserUid);
+            query = db.collection("guardians");
         } else {
             String searchQueryLowerCase = searchQuery.toLowerCase();
 
             query = db.collection("guardians")
-                    .whereEqualTo("uid", currentUserUid)
                     .orderBy("name")
                     .startAt(searchQueryLowerCase)
                     .endAt(searchQueryLowerCase + "\uf8ff");
@@ -232,6 +228,8 @@ public class emergencyCallActivity extends AppCompatActivity {
                     }
                 });
     }
+
+
 
     private void deleteGuardian(Guardian guardian) {
         // 현재 로그인한 사용자의 UID 가져오기
