@@ -33,6 +33,8 @@ public class ConnectedThread extends Thread {
 
     private static boolean isFallDetected = false;
 
+    private float previousXAngle = 0.0f;
+    private float previousYAngle = 0.0f;
 
 
     public ConnectedThread(BluetoothSocket socket, Context context, Handler handler) {
@@ -117,28 +119,33 @@ public class ConnectedThread extends Thread {
         }
     }
 
+
     private void processReceivedData(String jsonData) {
         try {
             JSONObject jsonObject = new JSONObject(jsonData);
 
-            // 가속도 데이터 추출
-            double accX = jsonObject.getDouble("acc_x");
-            double accY = jsonObject.getDouble("acc_y");
-            double accZ = jsonObject.getDouble("acc_z");
+            // 각도 데이터 추출
+            float angleX = (float) jsonObject.getDouble("an_x");
+            float angleY = (float) jsonObject.getDouble("an_y");
+            float angleZ = (float) jsonObject.getDouble("an_z");
 
             // 가속도 크기 계산
+            float accX = (float) jsonObject.getDouble("acc_x");
+            float accY = (float) jsonObject.getDouble("acc_y");
+            float accZ = (float) jsonObject.getDouble("acc_z");
             double accelerationMagnitude = Math.sqrt(accX * accX + accY * accY + accZ * accZ);
 
-            // 낙상 감지 임계값 설정 (조절이 필요할 수 있음)
-            double fallThreshold = 2.4;
+            // 임계값 설정
+            double fallThresholdAcceleration = 2.3;
+            double angleMaintainThreshold = 75.0;
 
-            Log.d("낙상", String.valueOf(accelerationMagnitude));
-
-            String logMessage = "Received sensor values: accX=" + accX + ", accY=" + accY + ", accZ=" + accZ;
-            Log.d(TAG, logMessage);
+            Log.d("가속도", String.valueOf(accelerationMagnitude));
+            Log.d("각도 데이터", "angleX=" + angleX + ", angleY=" + angleY + ", angleZ=" + angleZ);
 
             // 낙상 감지 알고리즘
-            if (!isFallDetected && accelerationMagnitude > fallThreshold) {
+            if (!isFallDetected &&
+                    (accelerationMagnitude > fallThresholdAcceleration &&
+                            (Math.abs(angleX) > angleMaintainThreshold || Math.abs(angleY) > angleMaintainThreshold))) {
                 // 낙상 감지됨
                 Log.d(TAG, "Fall Detected!");
                 isFallDetected = true;
@@ -152,7 +159,6 @@ public class ConnectedThread extends Thread {
             Log.e(TAG, "Error parsing JSON data: " + e.getMessage());
         }
     }
-
     public void write(String input) {
         byte[] bytes = input.getBytes();
         try {
