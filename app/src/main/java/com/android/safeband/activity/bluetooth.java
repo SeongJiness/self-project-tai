@@ -50,10 +50,11 @@ public class bluetooth extends AppCompatActivity {
 
     private final static int REQUEST_ENABLE_BT = 1;
     private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); // 블루투스 SPP 프로파일 UUID
-    private static final String BT_ADDRESS = "XX:XX:XX:XX:XX:XX"; // 아두이노 블루투스 주소
 
     private static final String TAG = "ArduinoSensorData";
 
+    private static final String PREFS_NAME = "BluetoothPrefs";
+    private static final String PREF_BT_ADDRESS = "BluetoothAddress";
     private boolean isReconnecting = false;
 
 
@@ -101,12 +102,11 @@ public class bluetooth extends AppCompatActivity {
         ImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(); // 인텐트 객체 생성하고
-                intent.putExtra("name", "suzin"); // 인텐트 객체에 데이터 넣기
-                setResult(RESULT_OK, intent); // 응답 보내기
                 finish(); // 현재 액티비티 없애기
             }
         });
+
+
 
         // Get permission
         String[] permissionList = {
@@ -166,6 +166,11 @@ public class bluetooth extends AppCompatActivity {
 
         listView.setOnItemClickListener(new myOnItemClickListener());
 
+        String savedBluetoothAddress = getSavedBluetoothAddress();
+        if (savedBluetoothAddress != null && !savedBluetoothAddress.isEmpty()) {
+            autoConnectToBluetooth(savedBluetoothAddress);
+        }
+
 
     }
 
@@ -216,8 +221,24 @@ public class bluetooth extends AppCompatActivity {
         if (connectedThread != null) {
             connectedThread.resetFallDetection();
         }
+
+        saveBluetoothAddress();
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        saveBluetoothAddress();
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        String savedBluetoothAddress = getSavedBluetoothAddress();
+        if (savedBluetoothAddress != null) {
+            autoConnectToBluetooth(savedBluetoothAddress);
+        }
+    }
 
     // 디바이스 검색 버튼 클릭 핸들러
     public void onClickButtonSearch(View view) {
@@ -304,15 +325,15 @@ public class bluetooth extends AppCompatActivity {
             try {
                 btSocket = createBluetoothSocket(device);
                 btSocket.connect();
-                textStatus.setText("connected to " + name);
             } catch (IOException e) {
                 flag = false;
-                textStatus.setText("connection failed!");
+                textStatus.setText("연결실패!");
                 e.printStackTrace();
             }
 
             if (flag) {
-                textStatus.setText("connected to " + name);
+                textStatus.setText(name +  "에 연결됨");
+                saveBluetoothAddress();
                 Handler handler = new Handler(Looper.getMainLooper());  // 이 부분에 원하는 Looper를 사용하세요.
                 connectedThread = new ConnectedThread(btSocket, bluetooth.this, handler);
                 receiveDataFromArduino(); // 연결 수립 전에 데이터 수신 시작
@@ -329,7 +350,7 @@ public class bluetooth extends AppCompatActivity {
             }
 
             if (deviceAddressArray.size() > 0) {
-                textStatus.setText("try...");
+                textStatus.setText("시도중");
 
                 final String name = btArrayAdapter.getItem(0);
                 final String address = deviceAddressArray.get(0);
@@ -343,12 +364,13 @@ public class bluetooth extends AppCompatActivity {
                     btSocket.connect();
                 } catch (IOException e) {
                     flag = false;
-                    textStatus.setText("connection failed!");
+                    textStatus.setText("연결실패!");
                     e.printStackTrace();
                 }
 
                 if (flag) {
-                    textStatus.setText("connected to " + name);
+                    textStatus.setText(name + "에 연결됨");
+                    saveBluetoothAddress();
                     Handler handler = new Handler(Looper.getMainLooper());  // 이 부분에 원하는 Looper를 사용하세요.
                     connectedThread = new ConnectedThread(btSocket, bluetooth.this, handler);
                     connectedThread.startReceiving();
@@ -358,4 +380,89 @@ public class bluetooth extends AppCompatActivity {
             }
         }
     }
+
+    private void autoConnectToBluetooth(String bluetoothAddress) {
+        Log.d(TAG, "Bluetooth 자동 연결: " + bluetoothAddress);
+
+        if (btAdapter != null && !btAdapter.isEnabled()) {
+            // Bluetooth가 비활성화되어 있으면 활성화합니다.
+            Log.d(TAG, "Bluetooth 비활성화, 활성화 중...");
+            //bluetoothOn();
+        }
+
+        // 이미 연결된 경우 추가적인 연결 시도를 하지 않도록 수정
+        if (btSocket != null && btSocket.isConnected()) {
+            textStatus.setText("이미 연결됨");
+            Log.d(TAG, "이미 연결됨");
+            return;
+        }
+
+        // 이전에 연결된 Bluetooth 주소 가져오기
+        String savedBluetoothAddress = getSavedBluetoothAddress();
+
+        // 기존에 연결된 장치가 있을 때만 자동 연결 시도
+        if (savedBluetoothAddress != null) {
+            BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+            if (bluetoothAdapter != null && bluetoothAdapter.isEnabled()) {
+                BluetoothDevice device = btAdapter.getRemoteDevice(savedBluetoothAddress);
+
+                if (device != null) {
+                    // 소켓 생성 및 연결
+                    try {
+                        btSocket = createBluetoothSocket(device);
+                        btSocket.connect();
+
+                        // 연결 성공을 나타내는 UI 업데이트 또는 기타 작업 수행
+                        textStatus.setText(device.getName() + "에 연결됨");
+                        Log.d(TAG, device.getName() + "에 연결됨");
+
+                        Handler handler = new Handler(Looper.getMainLooper());
+                        connectedThread = new ConnectedThread(btSocket, bluetooth.this, handler);
+                        connectedThread.startReceiving();
+                    } catch (IOException e) {
+                        // 연결 실패 시 처리 (예: 오류 메시지 표시)
+                        textStatus.setText("연결 실패!");
+                        Log.e(TAG, "연결 실패", e);
+                        e.printStackTrace();
+
+                        // 연결 실패 시에도 연결 스레드 초기화
+                        if (connectedThread != null) {
+                            connectedThread.resetFallDetection();
+                        }
+                    }
+                } else {
+                    // 저장된 Bluetooth 주소에 해당하는 장치를 찾을 수 없는 경우 처리
+                    textStatus.setText("장치를 찾을 수 없음");
+                    Log.d(TAG, "주소에 해당하는 장치를 찾을 수 없음: " + savedBluetoothAddress);
+                }
+            } else {
+                // Bluetooth가 꺼져 있을 때 처리
+                Log.d(TAG, "Bluetooth가 꺼져 있습니다.");
+            }
+        } else {
+            // 기존에 연결된 Bluetooth 장치가 없는 경우 처리
+            Log.d(TAG, "기존에 연결된 Bluetooth 장치가 없습니다.");
+        }
+    }
+
+    private void saveBluetoothAddress() {
+        if (btSocket != null && btSocket.isConnected()) {
+            String connectedDeviceAddress = btSocket.getRemoteDevice().getAddress();
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString(PREF_BT_ADDRESS, connectedDeviceAddress);
+            editor.apply();
+        }
+    }
+
+    private String getSavedBluetoothAddress() {
+        if (btSocket != null && btSocket.isConnected()) {
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            return prefs.getString(PREF_BT_ADDRESS, null);
+        } else {
+            return null;
+        }
+    }
+
 }
