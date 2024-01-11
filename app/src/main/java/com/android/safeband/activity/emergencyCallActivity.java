@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.safeband.activity.Guardian;
 import com.android.safeband.activity.GuardianAdapter;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -28,6 +29,7 @@ import java.util.Map;
 import com.android.safebandproject.R;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 public class emergencyCallActivity extends AppCompatActivity {
 
@@ -192,44 +194,72 @@ public class emergencyCallActivity extends AppCompatActivity {
 
     private void loadDataFromFirestore(String searchQuery) {
         // Firestore에서 데이터 가져오기
-        Query query;
-        if (TextUtils.isEmpty(searchQuery)) {
-            query = db.collection("guardians");
-        } else {
-            String searchQueryLowerCase = searchQuery.toLowerCase();
 
-            query = db.collection("guardians")
-                    .orderBy("name")
-                    .startAt(searchQueryLowerCase)
-                    .endAt(searchQueryLowerCase + "\uf8ff");
-        }
+        // 이름에 대한 쿼리
+        Query nameQuery = db.collection("guardians")
+                .orderBy("name")
+                .startAt(searchQuery.toLowerCase())
+                .endAt(searchQuery.toLowerCase() + "\uf8ff");
 
-        query.get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        // 데이터 가져오기 성공
-                        guardians.clear(); // 기존 데이터 클리어
-                        for (DocumentSnapshot document : task.getResult()) {
-                            Map<String, Object> data = document.getData();
-                            if (data != null) {
-                                String name = (String) data.get("name");
-                                String phone = (String) data.get("phone");
-                                Guardian guardian = new Guardian(name, phone);
-                                if (name.toLowerCase().contains(searchQuery.toLowerCase())) {
-                                    // 이름이 검색어를 포함할 경우에만 추가
-                                    guardians.add(guardian);
-                                }
-                            }
-                        }
-                        adapter.notifyDataSetChanged(); // 어댑터에 변경 사항 알리기
-                    } else {
-                        // 데이터 가져오기 실패
-                        // 실패 시 처리를 여기에 추가할 수 있습니다.
-                    }
+        // 전화번호에 대한 쿼리
+        Query phoneQuery = db.collection("guardians")
+                .orderBy("phone")
+                .startAt(searchQuery.toLowerCase())
+                .endAt(searchQuery.toLowerCase() + "\uf8ff");
+
+        // 이름과 전화번호의 결과를 합치기
+        Tasks.whenAllSuccess(nameQuery.get(), phoneQuery.get())
+                .addOnSuccessListener(querySnapshots -> {
+                    // nameQuery 및 phoneQuery의 결과를 합쳐서 처리
+                    // querySnapshots.get(0)은 nameQuery의 결과
+                    // querySnapshots.get(1)은 phoneQuery의 결과
+                    processQueryResults(querySnapshots);
+                })
+                .addOnFailureListener(e -> {
+                    // 실패 시 처리
                 });
     }
 
+    private void processQueryResults(List<Object> querySnapshots) {
+        guardians.clear(); // 기존 데이터 클리어
 
+        // nameQuery의 결과 처리
+        for (DocumentSnapshot document : ((QuerySnapshot) querySnapshots.get(0)).getDocuments()) {
+            Map<String, Object> data = document.getData();
+            if (data != null) {
+                String name = (String) data.get("name");
+                String phone = (String) data.get("phone");
+                Guardian guardian = new Guardian(name, phone);
+                guardians.add(guardian);
+            }
+        }
+
+        // phoneQuery의 결과 처리
+        for (DocumentSnapshot document : ((QuerySnapshot) querySnapshots.get(1)).getDocuments()) {
+            Map<String, Object> data = document.getData();
+            if (data != null) {
+                String name = (String) data.get("name");
+                String phone = (String) data.get("phone");
+                Guardian guardian = new Guardian(name, phone);
+                if (!containsGuardian(guardians, guardian)) {
+                    // 중복을 방지하기 위해 추가
+                    guardians.add(guardian);
+                }
+            }
+        }
+
+        adapter.notifyDataSetChanged(); // 어댑터에 변경 사항 알리기
+    }
+
+    private boolean containsGuardian(List<Guardian> guardians, Guardian guardian) {
+        for (Guardian existingGuardian : guardians) {
+            if (existingGuardian.getName().equals(guardian.getName()) &&
+                    existingGuardian.getPhoneNumber().equals(guardian.getPhoneNumber())) {
+                return true; // 이미 리스트에 존재하는 경우 true 반환
+            }
+        }
+        return false; // 리스트에 존재하지 않는 경우 false 반환
+    }
 
     private void deleteGuardian(Guardian guardian) {
         // 현재 로그인한 사용자의 UID 가져오기
