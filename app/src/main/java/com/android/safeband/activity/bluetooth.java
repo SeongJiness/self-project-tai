@@ -55,28 +55,9 @@ public class bluetooth extends AppCompatActivity {
 
     private static final String PREFS_NAME = "BluetoothPrefs";
     private static final String PREF_BT_ADDRESS = "BluetoothAddress";
+    private static final String PREF_BT_NAME = "BluetoothDeviceName";
     private boolean isReconnecting = false;
 
-
-    // Create a BroadcastReceiver for ACTION_FOUND.
-    private final BroadcastReceiver discoveryReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-
-                String deviceAddress = device.getAddress();
-                String deviceName = device.getName();
-
-                if (deviceName != null && !deviceAddressArray.contains(deviceAddress)) {
-                    btArrayAdapter.add(deviceName);
-                    deviceAddressArray.add(deviceAddress);
-                    btArrayAdapter.notifyDataSetChanged();
-                }
-            }
-        }
-    };
 
 
     private BluetoothSocket createBluetoothSocket(BluetoothDevice device) throws IOException {
@@ -165,7 +146,7 @@ public class bluetooth extends AppCompatActivity {
 
         // Register the ACTION_FOUND receiver.
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        registerReceiver(discoveryReceiver, filter);
+        registerReceiver(receiver, filter);
 
         listView.setOnItemClickListener(new myOnItemClickListener());
 
@@ -220,7 +201,7 @@ public class bluetooth extends AppCompatActivity {
         super.onDestroy();
 
         // Unregister the ACTION_FOUND receiver.
-        unregisterReceiver(discoveryReceiver);
+        unregisterReceiver(receiver);
 
         if (connectedThread != null) {
             connectedThread.resetFallDetection();
@@ -230,71 +211,44 @@ public class bluetooth extends AppCompatActivity {
     }
 
     // 디바이스 검색 버튼 클릭 핸들러
-    public void onClickButtonSearch(View view) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.BLUETOOTH_ADMIN) == PackageManager.PERMISSION_GRANTED
-                    && checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED) {
-                // 기존 스캔 중지
-                if (btAdapter.isDiscovering()) {
-                    btAdapter.cancelDiscovery();
-                }
-
-                // 새로운 검색을 시작하기 전에 기존 목록을 지웁니다.
-                btArrayAdapter.clear();
-                deviceAddressArray.clear();
-
-                // ACTION_FOUND 리시버 등록을 제거합니다.
-                unregisterReceiver(discoveryReceiver);
-
-                // ACTION_FOUND 리시버 다시 등록
-                IntentFilter discoveryFilter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-                registerReceiver(discoveryReceiver, discoveryFilter);
-
-                // 검색 시작
-                startDeviceDiscovery();
-            } else {
-                ActivityCompat.requestPermissions(this, new String[]{
-                        Manifest.permission.BLUETOOTH_ADMIN,
-                        Manifest.permission.BLUETOOTH_SCAN
-                }, 3);
-            }
-        } else {
-            // 기존 스캔 중지
-            if (btAdapter.isDiscovering()) {
-                btAdapter.cancelDiscovery();
-            }
-
-            // 새로운 검색을 시작하기 전에 기존 목록을 지웁니다.
-            btArrayAdapter.clear();
-            deviceAddressArray.clear();
-
-            // ACTION_FOUND 리시버 등록을 제거합니다.
-            unregisterReceiver(discoveryReceiver);
-
-            // ACTION_FOUND 리시버 다시 등록
-            IntentFilter discoveryFilter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-            registerReceiver(discoveryReceiver, discoveryFilter);
-
-            // 검색 시작
-            startDeviceDiscovery();
-        }
-    }
-
-    private void startDeviceDiscovery() {
-        // 권한이 허용된 경우에만 스캔 시작
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                checkSelfPermission(Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED) {
-            // 권한이 허용되지 않은 경우
-            Toast.makeText(this, "Bluetooth Admin permission not granted.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // 이미 스캔 중인 경우 중지
-        if (btAdapter.isDiscovering()) {
+    public void onClickButtonSearch(View view){
+        // Check if the device is already discovering
+        if(btAdapter.isDiscovering()){
             btAdapter.cancelDiscovery();
+        } else {
+            if (btAdapter.isEnabled()) {
+                btAdapter.startDiscovery();
+                btArrayAdapter.clear();
+                if (deviceAddressArray != null && !deviceAddressArray.isEmpty()) {
+                    deviceAddressArray.clear();
+                }
+                IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+                registerReceiver(receiver, filter);
+            } else {
+                Toast.makeText(getApplicationContext(), "블루투스가 꺼져있습니다.", Toast.LENGTH_SHORT).show();
+            }
         }
-        btAdapter.startDiscovery();
     }
+
+    // Create a BroadcastReceiver for ACTION_FOUND.
+    private final BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+
+                String deviceAddress = device.getAddress();
+                String deviceName = device.getName();
+
+                if (deviceName != null && !deviceAddressArray.contains(deviceAddress)) {
+                    btArrayAdapter.add(deviceName);
+                    deviceAddressArray.add(deviceAddress);
+                    btArrayAdapter.notifyDataSetChanged();
+                }
+            }
+        }
+    };
 
     public class myOnItemClickListener implements AdapterView.OnItemClickListener {
 
@@ -372,17 +326,15 @@ public class bluetooth extends AppCompatActivity {
     private void autoConnectToBluetooth(String bluetoothAddress) {
         Log.d(TAG, "Bluetooth 자동 연결: " + bluetoothAddress);
 
-        // 디버깅을 위해 추가한 로그
-        Log.d(TAG, "btSocket: " + btSocket);
-        Log.d(TAG, "btSocket.isConnected(): " + (btSocket != null ? btSocket.isConnected() : "null"));
+
 
         if (btAdapter != null && !btAdapter.isEnabled()) {
             // Bluetooth가 비활성화되어 있으면 활성화합니다.
             Log.d(TAG, "Bluetooth 비활성화, 활성화 중...");
-            //bluetoothOn();
+            bluetoothOn(); // 블루투스를 활성화하는 코드를 주석에서 제거
         }
 
-        // 이미 연결된 경우 추가적인 연결 시도를 하지 않도록 수정
+        // 이미 연결된 상태를 확인
         if (btSocket != null && btSocket.isConnected()) {
             textStatus.setText("이미 연결되어 있습니다.");
             Log.d(TAG, "이미 연결됨");
@@ -394,24 +346,24 @@ public class bluetooth extends AppCompatActivity {
 
         // 기존에 연결된 장치가 있을 때만 자동 연결 시도
         if (savedBluetoothAddress != null) {
-            // 이미 연결된 상태를 확인
-            if (btSocket != null && btSocket.isConnected()) {
-                textStatus.setText("이미 연결됨");
-                Log.d(TAG, "이미 연결됨");
-            } else {
-                // 연결 시도
-                BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
-                if (bluetoothAdapter != null && bluetoothAdapter.isEnabled()) {
-                    // 나머지 코드는 그대로 유지
-                    // ...
-                } else {
-                    // Bluetooth가 꺼져 있을 때 처리
-                    Log.d(TAG, "Bluetooth가 꺼져 있습니다.");
-                }
+            // 새로운 Bluetooth 소켓 생성 및 연결 시도
+            BluetoothDevice device = btAdapter.getRemoteDevice(savedBluetoothAddress);
+            UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); // SPP UUID
+            try {
+                btSocket = device.createRfcommSocketToServiceRecord(uuid);
+                btSocket.connect(); // 연결 시도
+                saveBluetoothAddress(); // 연결이 성공하면 주소를 저장
+                SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+                textStatus.setText(prefs.getString(PREF_BT_NAME,"") + "에 연결됨");
+                Handler handler = new Handler(Looper.getMainLooper());
+                connectedThread = new ConnectedThread(btSocket, bluetooth.this, handler);
+                connectedThread.startReceiving();
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.e(TAG, "Bluetooth 연결 실패");
+                textStatus.setText("연결 실패!");
             }
         } else {
-            // 기존에 연결된 Bluetooth 장치가 없는 경우 처리
             Log.d(TAG, "기존에 연결된 Bluetooth 장치가 없습니다.");
         }
     }
@@ -419,9 +371,11 @@ public class bluetooth extends AppCompatActivity {
     private void saveBluetoothAddress() {
         if (btSocket != null && btSocket.isConnected()) {
             String connectedDeviceAddress = btSocket.getRemoteDevice().getAddress();
+            String connectedDeviceName = btSocket.getRemoteDevice().getName(); // 디바이스 이름 가져오기
             SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
             editor.putString(PREF_BT_ADDRESS, connectedDeviceAddress);
+            editor.putString(PREF_BT_NAME, connectedDeviceName); // 디바이스 이름도 저장
             editor.apply();
         }
     }

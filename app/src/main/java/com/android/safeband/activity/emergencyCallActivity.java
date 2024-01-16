@@ -141,6 +141,7 @@ public class emergencyCallActivity extends AppCompatActivity {
     private void showAddGuardianDialog() {
         LayoutInflater inflater = LayoutInflater.from(this);
         View dialogView = inflater.inflate(R.layout.dialog_add_guardian, null);
+        String currentUserUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setView(dialogView)
@@ -174,7 +175,6 @@ public class emergencyCallActivity extends AppCompatActivity {
                                     // Firestore에 추가 실패 시 동작
                                     // 예: 실패 메시지 출력 또는 다른 작업 수행
                                 });
-
                         // RecyclerView에 추가
                         Guardian newGuardian = new Guardian(addedGuardianName, addedPhoneNumber);
                         guardians.add(newGuardian);
@@ -193,16 +193,19 @@ public class emergencyCallActivity extends AppCompatActivity {
     }
 
     private void loadDataFromFirestore(String searchQuery) {
+        String currentUserUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         // Firestore에서 데이터 가져오기
 
         // 이름에 대한 쿼리
         Query nameQuery = db.collection("guardians")
+                .whereEqualTo("uid", currentUserUid)
                 .orderBy("name")
                 .startAt(searchQuery.toLowerCase())
                 .endAt(searchQuery.toLowerCase() + "\uf8ff");
 
         // 전화번호에 대한 쿼리
         Query phoneQuery = db.collection("guardians")
+                .whereEqualTo("uid", currentUserUid)
                 .orderBy("phone")
                 .startAt(searchQuery.toLowerCase())
                 .endAt(searchQuery.toLowerCase() + "\uf8ff");
