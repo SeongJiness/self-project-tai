@@ -118,8 +118,7 @@ public class emergencyCallActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                // Perform search when text changes
-                String searchQuery = charSequence.toString().trim();
+                String searchQuery = charSequence.toString().trim().toLowerCase();
                 loadDataFromFirestore(searchQuery);
             }
 
@@ -194,63 +193,98 @@ public class emergencyCallActivity extends AppCompatActivity {
 
     private void loadDataFromFirestore(String searchQuery) {
         String currentUserUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        // Firestore에서 데이터 가져오기
 
-        // 이름에 대한 쿼리
-        Query nameQuery = db.collection("guardians")
-                .whereEqualTo("uid", currentUserUid)
-                .orderBy("name")
-                .startAt(searchQuery.toLowerCase())
-                .endAt(searchQuery.toLowerCase() + "\uf8ff");
+        if (TextUtils.isEmpty(searchQuery)) {
+            // 검색어가 비어 있을 때 전체 데이터를 로드
+            db.collection("guardians")
+                    .whereEqualTo("uid", currentUserUid)
+                    .orderBy("name")
+                    .get()
+                    .addOnSuccessListener(queryDocumentSnapshots -> {
+                        guardians.clear(); // 기존 데이터 클리어
+                        for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                            Map<String, Object> data = document.getData();
+                            if (data != null) {
+                                String name = (String) data.get("name");
+                                String phone = (String) data.get("phone");
+                                Guardian guardian = new Guardian(name, phone);
+                                guardians.add(guardian);
+                            }
+                        }
+                        adapter.notifyDataSetChanged(); // 어댑터에 변경 사항 알리기
+                    })
+                    .addOnFailureListener(e -> {
+                        // 실패 시 처리
+                    });
+        } else {
+            // 검색어를 소문자로 변환
+            String lowercaseSearchQuery = searchQuery.toLowerCase();
 
-        // 전화번호에 대한 쿼리
-        Query phoneQuery = db.collection("guardians")
-                .whereEqualTo("uid", currentUserUid)
-                .orderBy("phone")
-                .startAt(searchQuery.toLowerCase())
-                .endAt(searchQuery.toLowerCase() + "\uf8ff");
+            // 이름에 대한 쿼리
+            Query nameQuery = db.collection("guardians")
+                    .whereEqualTo("uid", currentUserUid)
+                    .orderBy("name")
+                    .startAt(lowercaseSearchQuery)
+                    .endAt(lowercaseSearchQuery + "\uf8ff");
 
-        // 이름과 전화번호의 결과를 합치기
-        Tasks.whenAllSuccess(nameQuery.get(), phoneQuery.get())
-                .addOnSuccessListener(querySnapshots -> {
-                    // nameQuery 및 phoneQuery의 결과를 합쳐서 처리
-                    // querySnapshots.get(0)은 nameQuery의 결과
-                    // querySnapshots.get(1)은 phoneQuery의 결과
-                    processQueryResults(querySnapshots);
-                })
-                .addOnFailureListener(e -> {
-                    // 실패 시 처리
-                });
+            // 전화번호에 대한 쿼리
+            Query phoneQuery = db.collection("guardians")
+                    .whereEqualTo("uid", currentUserUid)
+                    .orderBy("phone")
+                    .startAt(lowercaseSearchQuery)
+                    .endAt(lowercaseSearchQuery + "\uf8ff");
+
+            // 이름과 전화번호의 결과를 합치기
+            Tasks.whenAllSuccess(nameQuery.get(), phoneQuery.get())
+                    .addOnSuccessListener(querySnapshots -> {
+                        // nameQuery 및 phoneQuery의 결과를 합쳐서 처리
+                        // querySnapshots.get(0)은 nameQuery의 결과
+                        // querySnapshots.get(1)은 phoneQuery의 결과
+                        processQueryResults(querySnapshots);
+                    })
+                    .addOnFailureListener(e -> {
+                        // 실패 시 처리
+                        Log.e("FirestoreError", "Error fetching data: " + e.getMessage());
+                    });
+        }
     }
-
     private void processQueryResults(List<Object> querySnapshots) {
         guardians.clear(); // 기존 데이터 클리어
 
         // nameQuery의 결과 처리
-        for (DocumentSnapshot document : ((QuerySnapshot) querySnapshots.get(0)).getDocuments()) {
+        List<DocumentSnapshot> nameResults = ((QuerySnapshot) querySnapshots.get(0)).getDocuments();
+        List<DocumentSnapshot> phoneResults = ((QuerySnapshot) querySnapshots.get(1)).getDocuments();
+
+        // 결과를 합치기 위한 임시 리스트
+        List<Guardian> combinedResults = new ArrayList<>();
+
+        // nameQuery의 결과 처리
+        for (DocumentSnapshot document : nameResults) {
             Map<String, Object> data = document.getData();
             if (data != null) {
                 String name = (String) data.get("name");
                 String phone = (String) data.get("phone");
                 Guardian guardian = new Guardian(name, phone);
-                guardians.add(guardian);
+                combinedResults.add(guardian);
             }
         }
 
         // phoneQuery의 결과 처리
-        for (DocumentSnapshot document : ((QuerySnapshot) querySnapshots.get(1)).getDocuments()) {
+        for (DocumentSnapshot document : phoneResults) {
             Map<String, Object> data = document.getData();
             if (data != null) {
                 String name = (String) data.get("name");
                 String phone = (String) data.get("phone");
                 Guardian guardian = new Guardian(name, phone);
-                if (!containsGuardian(guardians, guardian)) {
+                if (!containsGuardian(combinedResults, guardian)) {
                     // 중복을 방지하기 위해 추가
-                    guardians.add(guardian);
+                    combinedResults.add(guardian);
                 }
             }
         }
 
+        // 최종 결과를 guardians에 설정
+        guardians.addAll(combinedResults);
         adapter.notifyDataSetChanged(); // 어댑터에 변경 사항 알리기
     }
 
