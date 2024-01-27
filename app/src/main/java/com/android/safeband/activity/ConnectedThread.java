@@ -136,7 +136,7 @@ public class ConnectedThread extends Thread {
             double accelerationMagnitude = Math.sqrt(accX * accX + accY * accY + accZ * accZ);
 
             // 임계값 설정
-            double fallThresholdAcceleration = 2.3;
+            double fallThresholdAcceleration = 2.4;
             double angleMaintainThreshold = 75.0;
 
             Log.d("가속도", String.valueOf(accelerationMagnitude));
