@@ -1,54 +1,6 @@
-```gradle
-rootProject.name = "safebandproject"
+2024 태국 국제발명전시회 동상 작품
+2023 영남이공대학교 창업동아리 우수상
 
-plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android' version '1.8.0' apply false
-}
+2023년도 SELF동아리 노인 휠체어 낙상사고를 위한 SAFE밴드
 
-android {
-    namespace 'com.android.safebandproject'
-    compileSdk 33
-
-    defaultConfig {
-        applicationId "com.android.safebandproject"
-        minSdk 21
-        targetSdk 33
-        versionCode 1
-        versionName "1.0"
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-    }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-    buildFeatures {
-        dataBinding true
-        viewBinding true
-    }
-}
-
-constraints {
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0") {
-            because("kotlin-stdlib-jdk7 is now a part of kotlin-stdlib")
-        }
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0") {
-            because("kotlin-stdlib-jdk8 is now a part of kotlin-stdlib")
-        }
-    }
-```
-## Modularization Example
-
-[https://github.com/ad-astra-per-ardua/selfproject_temp](https://github.com/ad-astra-per-ardua/selfproject_temp/tree/main/app)
-
-Repactored to 
-
-[https://github.com/ad-astra-per-ardua/123321/tree/master/app](https://github.com/ad-astra-per-ardua/123321/tree/master/app)https://github.com/ad-astra-per-ardua/123321/tree/master/app
+참여자 : 한상희, 이성진, 우영아, 전민혁, 이지호, 김성민, 김찬용, 김민재
